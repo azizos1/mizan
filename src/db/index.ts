@@ -6,19 +6,22 @@ import * as schema from "./schema";
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error("❌ DATABASE_URL is not defined in .env.local");
+  throw new Error("❌ DATABASE_URL is not defined");
 }
 
-console.log("✅ Connecting to:", connectionString.substring(0, 60) + "...");
+console.log("✅ Connecting to database...");
 
 const pool = new Pool({
-  connectionString: connectionString + "?sslmode=no-verify",
+  connectionString: connectionString,
   connectionTimeoutMillis: 30000,
   max: 1,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 pool.on("error", (err) => {
-  console.error("❌ Unexpected pool error:", err);
+  console.error("❌ Pool error:", err);
 });
 
 export const db = drizzle(pool, { schema });
