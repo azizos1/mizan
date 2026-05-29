@@ -6,8 +6,6 @@ import {
   numeric,
   date,
   timestamp,
-  check,
-  uniqueIndex,
   pgEnum,
 } from "drizzle-orm/pg-core";
 
@@ -34,7 +32,7 @@ export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name"),
   email: text("email").notNull().unique(),
-  password: text("password").notNull(), // مشفر بـ bcrypt
+  password: text("password").notNull(),
   image: text("image"),
   role: text("role").default("user"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -63,36 +61,26 @@ export const wallets = pgTable("wallets", {
 // =====================
 // 3. جدول قواعد التوزيع
 // =====================
-export const allocationRules = pgTable(
-  "allocation_rules",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    userId: uuid("user_id")
-      .notNull()
-      .unique()
-      .references(() => users.id, { onDelete: "cascade" }),
-    investmentPct: numeric("investment_pct", { precision: 5, scale: 2 })
-      .notNull()
-      .default("30.00"),
-    emergencyPct: numeric("emergency_pct", { precision: 5, scale: 2 })
-      .notNull()
-      .default("15.00"),
-    familyPct: numeric("family_pct", { precision: 5, scale: 2 })
-      .notNull()
-      .default("10.00"),
-    charityPct: numeric("charity_pct", { precision: 5, scale: 2 })
-      .notNull()
-      .default("5.00"),
-    updatedAt: timestamp("updated_at").defaultNow(),
-  },
-  (table) => [
-    check(
-      "total_percentage_check",
-      // مجموع النسب <= 100
-      `(${table.investmentPct.name} + ${table.emergencyPct.name} + ${table.familyPct.name} + ${table.charityPct.name}) <= 100`
-    ),
-  ]
-);
+export const allocationRules = pgTable("allocation_rules", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  investmentPct: numeric("investment_pct", { precision: 5, scale: 2 })
+    .notNull()
+    .default("30.00"),
+  emergencyPct: numeric("emergency_pct", { precision: 5, scale: 2 })
+    .notNull()
+    .default("15.00"),
+  familyPct: numeric("family_pct", { precision: 5, scale: 2 })
+    .notNull()
+    .default("10.00"),
+  charityPct: numeric("charity_pct", { precision: 5, scale: 2 })
+    .notNull()
+    .default("5.00"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 
 // =====================
 // 4. جدول المعاملات
@@ -128,6 +116,7 @@ export const goals = pgTable("goals", {
   targetDate: date("target_date"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
 // 6. جدول تتبع النقرات
 export const referralClicks = pgTable("referral_clicks", {
   id: uuid("id").primaryKey().defaultRandom(),
