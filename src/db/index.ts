@@ -12,8 +12,8 @@ if (!connectionString) {
 console.log("✅ Connecting to database...");
 
 const pool = new Pool({
-  connectionString: connectionString,
-  connectionTimeoutMillis: 30000,
+  connectionString: connectionString + "?sslmode=no-verify&connect_timeout=30",
+  connectionTimeoutMillis: 60000,
   max: 1,
   ssl: {
     rejectUnauthorized: false,
