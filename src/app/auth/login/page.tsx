@@ -5,7 +5,6 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { LogIn, Mail, Lock } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,11 +18,7 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    const result = await signIn("credentials", { email, password, redirect: false });
 
     if (result?.error) {
       setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
@@ -34,73 +29,50 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
-      <div className="w-full max-w-sm space-y-8">
-        {/* Logo */}
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">⚖️</span>
-          </div>
-          <h1 className="text-2xl font-bold text-white">ميزان</h1>
-          <p className="text-gray-500 text-sm mt-2">نظام حياتك المالية</p>
+    <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+      <div style={{ width: "100%", maxWidth: "400px", display: "flex", flexDirection: "column", gap: "20px" }}>
+
+        {/* Logo Card */}
+        <div style={{ backgroundColor: "white", borderRadius: "24px", padding: "32px 24px", textAlign: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9" }}>
+          <p style={{ fontSize: "48px", margin: "0 0 8px 0" }}>⚖️</p>
+          <h1 style={{ color: "#0f172a", fontSize: "28px", fontWeight: 900, margin: 0 }}>ميزان</h1>
+          <p style={{ color: "#94a3b8", fontSize: "14px", margin: "8px 0 0 0" }}>نظام حياتك المالية</p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6 space-y-5">
+        {/* Login Form Card */}
+        <form onSubmit={handleSubmit} style={{ backgroundColor: "white", borderRadius: "24px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9", display: "flex", flexDirection: "column", gap: "16px" }}>
           {error && (
-            <div className="bg-rose-500/10 text-rose-400 p-3 rounded-xl text-sm text-center">
-              {error}
-            </div>
+            <div style={{ backgroundColor: "#fef2f2", borderRadius: "14px", padding: "14px", textAlign: "center", color: "#dc2626", fontSize: "13px", fontWeight: 500 }}>{error}</div>
           )}
 
           <div>
-            <label className="text-gray-400 text-xs mb-2 block">البريد الإلكتروني</label>
-            <div className="relative">
-              <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[#0a0a0f] border border-white/5 rounded-xl py-3 pr-10 pl-4 text-white text-sm focus:outline-none focus:border-indigo-500/50"
-                placeholder="example@email.com"
-                required
-                dir="ltr"
-              />
-            </div>
+            <label style={{ color: "#64748b", fontSize: "13px", marginBottom: "6px", display: "block" }}>البريد الإلكتروني</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              style={{ width: "100%", border: "1px solid #e2e8f0", borderRadius: "14px", padding: "14px 16px", fontSize: "16px", color: "#0f172a", outline: "none", boxSizing: "border-box" }}
+              placeholder="example@email.com" required dir="ltr" />
           </div>
 
           <div>
-            <label className="text-gray-400 text-xs mb-2 block">كلمة المرور</label>
-            <div className="relative">
-              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#0a0a0f] border border-white/5 rounded-xl py-3 pr-10 pl-4 text-white text-sm focus:outline-none focus:border-indigo-500/50"
-                placeholder="••••••••"
-                required
-                dir="ltr"
-              />
-            </div>
+            <label style={{ color: "#64748b", fontSize: "13px", marginBottom: "6px", display: "block" }}>كلمة المرور</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+              style={{ width: "100%", border: "1px solid #e2e8f0", borderRadius: "14px", padding: "14px 16px", fontSize: "16px", color: "#0f172a", outline: "none", boxSizing: "border-box" }}
+              placeholder="••••••••" required dir="ltr" />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-800 text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition"
-          >
-            <LogIn className="w-4 h-4" />
-            {loading ? "جاري الدخول..." : "دخول"}
+          <button type="submit" disabled={loading}
+            style={{ padding: "16px", backgroundColor: loading ? "#94a3b8" : "#4f46e5", color: "white", border: "none", borderRadius: "16px", fontSize: "16px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer" }}>
+            {loading ? "⏳ جاري الدخول..." : "🚀 دخول"}
           </button>
         </form>
 
-        <p className="text-center text-gray-500 text-sm">
+        {/* Register Link */}
+        <p style={{ textAlign: "center", color: "#94a3b8", fontSize: "14px", margin: 0 }}>
           ليس لديك حساب؟{" "}
-          <Link href="/auth/register" className="text-indigo-400 hover:text-indigo-300">
+          <Link href="/auth/register" style={{ color: "#4f46e5", fontWeight: 700, textDecoration: "none" }}>
             إنشاء حساب
           </Link>
         </p>
+
       </div>
     </div>
   );
