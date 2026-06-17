@@ -4,6 +4,9 @@ import { db } from "@/db";
 import { wallets, transactions } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
+// سعر الصرف: 1 دولار = 3.1 دينار تونسي (قابل للتعديل)
+const USD_TO_TND = 3.1;
+
 export async function POST(request: Request) {
   try {
     const session = await auth();
@@ -17,6 +20,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "المبلغ غير صحيح" }, { status: 400 });
     }
 
+    // تحويل المبلغ للدينار
+    const amountInTND = amount * USD_TO_TND;
+
     // جلب محفظة الاستثمار
     const [investWallet] = await db
       .select()
@@ -28,7 +34,7 @@ export async function POST(request: Request) {
     }
 
     const currentBalance = parseFloat(investWallet.balance);
-    const changeAmount = type === "gain" ? amount : -amount;
+    const changeAmount = type === "gain" ? amountInTND : -amountInTND;
     const newBalance = currentBalance + changeAmount;
 
     // تحديث رصيد الاستثمار
@@ -42,11 +48,14 @@ export async function POST(request: Request) {
       userId: session.user.id!,
       walletId: investWallet.id,
       type: type === "gain" ? "income" : "expense",
-      amount: amount.toFixed(2),
-      description: `تداول: ${type === "gain" ? "ربح" : "خسارة"}${note ? " - " + note : ""}`,
+      amount: amountInTND.toFixed(2),
+      description: `تداول: ${type === "gain" ? "ربح" : "خسارة"} $${amount} (${amountInTND.toFixed(2)} د.ت) ${note ? " - " + note : ""}`,
     });
 
-    return NextResponse.json({ message: "تم التسجيل بنجاح", newBalance });
+    return NextResponse.json({
+      message: `تم تسجيل ${type === "gain" ? "ربح" : "خسارة"} $${amount} = ${amountInTND.toFixed(2)} د.ت`,
+      newBalance
+    });
   } catch (error) {
     console.error("Trading error:", error);
     return NextResponse.json({ error: "حدث خطأ" }, { status: 500 });
