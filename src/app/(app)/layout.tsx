@@ -12,6 +12,7 @@ const navItems = [
   { href: "/goals", icon: "🎯", label: "أهداف" },
   { href: "/trading", icon: "📈", label: "تداول" },
   { href: "/settings", icon: "⚙️", label: "إعدادات" },
+  { href: "/trading-log", icon: "📈", label: "exness his" },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

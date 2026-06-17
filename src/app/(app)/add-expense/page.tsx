@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const categories = ["🍔 أكل", "☕ قهوة", "🚗 تنقل", "🛍️ تسوق", "📄 فواتير", "🎮 ترفيه", "🏥 صحة", "📦 أخرى"];
+const walletTypes = ["حياة يومية", "استثمار", "طوارئ", "عائلة", "صدقة"];
 const moods = [
   { value: "needed", label: "👍 أحتاجه", color: "#059669", bg: "#ecfdf5" },
   { value: "impulsive", label: "😬 مندفع", color: "#d97706", bg: "#fffbeb" },
@@ -14,6 +15,7 @@ export default function AddExpensePage() {
   const router = useRouter();
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("🍔 أكل");
+  const [walletType, setWalletType] = useState("حياة يومية");
   const [note, setNote] = useState("");
   const [mood, setMood] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,11 +30,11 @@ export default function AddExpensePage() {
       const res = await fetch("/api/transactions/expense", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: parseFloat(amount), category, walletType: "حياة يومية", note, emotionalState: mood }),
+        body: JSON.stringify({ amount: parseFloat(amount), category, walletType, note, emotionalState: mood }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "خطأ"); setLoading(false); return; }
-      setSuccess(data.warning || `تم تسجيل ${parseFloat(amount).toLocaleString("ar-TN")} د.ت`);
+      setSuccess(data.warning || `تم تسجيل ${parseFloat(amount).toLocaleString("ar-TN")} د.ت من ${walletType}`);
       setAmount(""); setNote(""); setMood("");
       setTimeout(() => router.push("/dashboard"), 1500);
     } catch { setError("خطأ في الاتصال"); } finally { setLoading(false); }
@@ -44,6 +46,31 @@ export default function AddExpensePage() {
       {/* Title */}
       <div style={{ backgroundColor: "white", borderRadius: "24px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9" }}>
         <h1 style={{ color: "#0f172a", fontSize: "24px", fontWeight: 800, margin: 0 }}>➖ إضافة مصروف</h1>
+      </div>
+
+      {/* Wallet Select - الجديد */}
+      <div style={{ backgroundColor: "white", borderRadius: "24px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9" }}>
+        <p style={{ color: "#94a3b8", fontSize: "13px", margin: "0 0 12px 0" }}>من محفظة</p>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          {walletTypes.map((w) => (
+            <button
+              key={w}
+              onClick={() => setWalletType(w)}
+              style={{
+                padding: "10px 14px",
+                borderRadius: "12px",
+                border: walletType === w ? "2px solid #dc2626" : "1px solid #e2e8f0",
+                backgroundColor: walletType === w ? "#fef2f2" : "white",
+                color: walletType === w ? "#dc2626" : "#64748b",
+                fontSize: "13px",
+                fontWeight: 600,
+                cursor: "pointer"
+              }}
+            >
+              {w}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Amount */}
