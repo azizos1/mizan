@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { wallets, transactions } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
-// سعر الصرف: 1 دولار = 3.1 دينار تونسي (قابل للتعديل)
+// سعر الصرف: 1 دولار = 3.1 دينار تونسي
 const USD_TO_TND = 3.1;
 
 export async function POST(request: Request) {
@@ -43,11 +43,11 @@ export async function POST(request: Request) {
       .set({ balance: newBalance.toFixed(2) })
       .where(eq(wallets.id, investWallet.id));
 
-    // تسجيل المعاملة
+    // تسجيل المعاملة بنوع trading_gain أو trading_loss
     await db.insert(transactions).values({
       userId: session.user.id!,
       walletId: investWallet.id,
-      type: type === "gain" ? "income" : "expense",
+      type: type === "gain" ? "trading_gain" : "trading_loss",
       amount: amountInTND.toFixed(2),
       description: `تداول: ${type === "gain" ? "ربح" : "خسارة"} $${amount} (${amountInTND.toFixed(2)} د.ت) ${note ? " - " + note : ""}`,
     });

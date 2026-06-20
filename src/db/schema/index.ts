@@ -23,6 +23,8 @@ export const transactionTypeEnum = pgEnum("transaction_type", [
   "allocation",
   "expense",
   "goal_contribution",
+  "trading_gain",
+  "trading_loss",
 ]);
 
 // =====================
