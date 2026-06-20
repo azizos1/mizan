@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { wallets, transactions } from "@/db/schema";
+import { wallets, transactions, userSettings } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export default async function DashboardPage() {
@@ -9,6 +9,12 @@ export default async function DashboardPage() {
   if (!session?.user) redirect("/auth/login");
 
   const userId = session.user.id!;
+  
+  // جلب الإعدادات
+  const [settings] = await db.select().from(userSettings).where(eq(userSettings.userId, userId));
+  const symbol = settings?.currencySymbol || "د.ت";
+  const emergGoal = settings?.emergencyGoal ? parseFloat(settings.emergencyGoal) : 3000;
+
   const userWallets = await db.select().from(wallets).where(eq(wallets.userId, userId));
   const systemWallets = userWallets.filter((w) => w.type === "system");
   const goalWallets = userWallets.filter((w) => w.type === "goal");
@@ -25,8 +31,7 @@ export default async function DashboardPage() {
 
   const emergencyWallet = systemWallets.find((w) => w.name === "طوارئ");
   const emergencyBalance = parseFloat(emergencyWallet?.balance || "0");
-  const emergencyGoal = 3000;
-  const emergencyProgress = Math.min(Math.round((emergencyBalance / emergencyGoal) * 100), 100);
+  const emergencyProgress = Math.min(Math.round((emergencyBalance / emergGoal) * 100), 100);
 
   const recent = allTx.filter((t) => t.type === "income" || t.type === "expense").sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()).slice(0, 5);
 
@@ -62,7 +67,7 @@ export default async function DashboardPage() {
         <p style={{ color: "#c7d2fe", fontSize: "14px", margin: 0 }}>الرصيد الإجمالي</p>
         <p style={{ fontSize: "40px", fontWeight: 900, margin: "8px 0 0 0" }}>
           {totalBalance.toLocaleString("ar-TN")}
-          <span style={{ fontSize: "18px", fontWeight: 400, color: "#c7d2fe", marginRight: "8px" }}>د.ت</span>
+          <span style={{ fontSize: "18px", fontWeight: 400, color: "#c7d2fe", marginRight: "8px" }}>{symbol}</span>
         </p>
       </div>
 
@@ -125,7 +130,7 @@ export default async function DashboardPage() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
           <div>
             <p style={{ color: "#0f172a", fontSize: "18px", fontWeight: 700, margin: 0 }}>🛡️ صندوق الطوارئ</p>
-            <p style={{ color: "#94a3b8", fontSize: "13px", margin: "2px 0 0 0" }}>الهدف: {emergencyGoal.toLocaleString("ar-TN")} د.ت</p>
+            <p style={{ color: "#94a3b8", fontSize: "13px", margin: "2px 0 0 0" }}>الهدف: {emergGoal.toLocaleString("ar-TN")} {symbol}</p>
           </div>
           <p style={{ color: "#f59e0b", fontSize: "28px", fontWeight: 900, margin: 0 }}>{emergencyProgress}%</p>
         </div>
@@ -133,50 +138,33 @@ export default async function DashboardPage() {
           <div style={{ height: "100%", width: `${emergencyProgress}%`, backgroundColor: "#f59e0b", borderRadius: "10px" }} />
         </div>
         <p style={{ color: "#94a3b8", fontSize: "13px", margin: 0 }}>
-          تم توفير: <span style={{ color: "#0f172a", fontWeight: 700 }}>{emergencyBalance.toLocaleString("ar-TN")} د.ت</span>
+          تم توفير: <span style={{ color: "#0f172a", fontWeight: 700 }}>{emergencyBalance.toLocaleString("ar-TN")} {symbol}</span>
         </p>
       </div>
 
-      {/* CARD 7.5: Goals Reminder - الجديد! */}
+      {/* Goals Reminder */}
       {goalWallets.length > 0 && (
         <div style={{ backgroundColor: "white", borderRadius: "20px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9" }}>
           <h2 style={{ color: "#0f172a", fontSize: "18px", fontWeight: 800, margin: "0 0 16px 0" }}>🎯 تذكير الأهداف</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {goalWallets.map((gw) => {
-              const balance = parseFloat(gw.balance);
-              return (
-                <div key={gw.id} style={{
-                  backgroundColor: "#f8fafc", borderRadius: "16px", padding: "14px 16px",
-                  display: "flex", justifyContent: "space-between", alignItems: "center"
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <span style={{ fontSize: "24px" }}>🎯</span>
-                    <div>
-                      <p style={{ color: "#0f172a", fontSize: "15px", fontWeight: 700, margin: 0 }}>
-                        {gw.name.replace("هدف: ", "")}
-                      </p>
-                      <p style={{ color: "#64748b", fontSize: "12px", margin: "2px 0 0 0" }}>
-                        تم توفير: {balance.toLocaleString("ar-TN")} د.ت
-                      </p>
-                    </div>
+          {goalWallets.map((gw) => {
+            const balance = parseFloat(gw.balance);
+            return (
+              <div key={gw.id} style={{ backgroundColor: "#f8fafc", borderRadius: "16px", padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <span style={{ fontSize: "24px" }}>🎯</span>
+                  <div>
+                    <p style={{ color: "#0f172a", fontSize: "15px", fontWeight: 700, margin: 0 }}>{gw.name.replace("هدف: ", "")}</p>
+                    <p style={{ color: "#64748b", fontSize: "12px", margin: "2px 0 0 0" }}>تم توفير: {balance.toLocaleString("ar-TN")} {symbol}</p>
                   </div>
-                  <a href="/goals" style={{ color: "#4f46e5", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>
-                    تفاصيل →
-                  </a>
                 </div>
-              );
-            })}
-          </div>
-          <a href="/goals" style={{
-            display: "block", textAlign: "center", marginTop: "16px",
-            color: "#4f46e5", fontSize: "14px", fontWeight: 600, textDecoration: "none"
-          }}>
-            عرض كل الأهداف ←
-          </a>
+                <a href="/goals" style={{ color: "#4f46e5", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>تفاصيل →</a>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* CARD 8: Wallets */}
+      {/* Wallets */}
       <div>
         <h2 style={{ color: "#0f172a", fontSize: "20px", fontWeight: 800, margin: "0 0 16px 0" }}>💰 المحافظ</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -195,19 +183,9 @@ export default async function DashboardPage() {
               "استثمار": "📈", "طوارئ": "🛡️", "عائلة": "👨‍👩‍👧‍👦", "صدقة": "🤲", "حياة يومية": "🏠"
             };
             return (
-              <div key={w.id} style={{
-                backgroundColor: "white", borderRadius: "20px", padding: "20px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9",
-                display: "flex", justifyContent: "space-between", alignItems: "center"
-              }}>
+              <div key={w.id} style={{ backgroundColor: "white", borderRadius: "20px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                  <div style={{
-                    width: "52px", height: "52px", borderRadius: "16px",
-                    backgroundColor: c.bg, display: "flex", alignItems: "center",
-                    justifyContent: "center", fontSize: "22px"
-                  }}>
-                    {emojis[w.name] || "💰"}
-                  </div>
+                  <div style={{ width: "52px", height: "52px", borderRadius: "16px", backgroundColor: c.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>{emojis[w.name] || "💰"}</div>
                   <div>
                     <p style={{ color: "#0f172a", fontSize: "16px", fontWeight: 700, margin: 0 }}>{w.name}</p>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "6px" }}>
@@ -218,69 +196,41 @@ export default async function DashboardPage() {
                     </div>
                   </div>
                 </div>
-                <p style={{ color: "#0f172a", fontSize: "20px", fontWeight: 800, margin: 0 }}>
-                  {balance.toLocaleString("ar-TN")} <span style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 400 }}>د.ت</span>
-                </p>
+                <p style={{ color: "#0f172a", fontSize: "20px", fontWeight: 800, margin: 0 }}>{balance.toLocaleString("ar-TN")} <span style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 400 }}>{symbol}</span></p>
               </div>
             );
           })}
         </div>
       </div>
-            {/* CARD 8.5: اكتشف عالم التداول */}
+
+      {/* Trading Card */}
       <a href="/trading" style={{ textDecoration: "none" }}>
-        <div style={{
-          background: "linear-gradient(135deg, #1e293b, #0f172a)",
-          borderRadius: "24px",
-          padding: "24px",
-          color: "white",
-          position: "relative",
-          overflow: "hidden"
-        }}>
-          <div style={{
-            position: "absolute", top: -20, left: -20,
-            width: 80, height: 80, borderRadius: "50%",
-            background: "rgba(245,158,11,0.3)", filter: "blur(30px)"
-          }} />
-          <div style={{
-            position: "relative", zIndex: 1,
-            display: "flex", alignItems: "center", justifyContent: "space-between"
-          }}>
+        <div style={{ background: "linear-gradient(135deg, #1e293b, #0f172a)", borderRadius: "24px", padding: "24px", color: "white", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: -20, left: -20, width: 80, height: 80, borderRadius: "50%", background: "rgba(245,158,11,0.3)", filter: "blur(30px)" }} />
+          <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
               <span style={{ fontSize: "40px" }}>📈</span>
               <div>
-                <p style={{ fontSize: "18px", fontWeight: 800, margin: 0 }}>
-                  اكتشف عالم التداول
-                </p>
-                <p style={{ fontSize: "13px", opacity: 0.7, margin: "4px 0 0 0" }}>
-                  افتح حساب واحصل على بونص ترحيبي
-                </p>
+                <p style={{ fontSize: "18px", fontWeight: 800, margin: 0 }}>اكتشف عالم التداول</p>
+                <p style={{ fontSize: "13px", opacity: 0.7, margin: "4px 0 0 0" }}>افتح حساب واحصل على بونص ترحيبي</p>
               </div>
             </div>
             <span style={{ fontSize: "24px", color: "#f59e0b" }}>→</span>
           </div>
         </div>
       </a>
-      {/* CARD 9: Recent Transactions */}
+
+      {/* Recent Transactions */}
       <div>
         <h2 style={{ color: "#0f172a", fontSize: "20px", fontWeight: 800, margin: "0 0 16px 0" }}>📋 آخر العمليات</h2>
-        <div style={{
-          backgroundColor: "white", borderRadius: "20px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9", overflow: "hidden"
-        }}>
+        <div style={{ backgroundColor: "white", borderRadius: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9", overflow: "hidden" }}>
           {recent.length === 0 ? (
             <p style={{ color: "#94a3b8", textAlign: "center", padding: "40px", margin: 0 }}>لا توجد عمليات بعد</p>
           ) : (
             recent.map((tx, i) => (
-              <div key={tx.id} style={{
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-                padding: "16px 20px", borderBottom: i < recent.length - 1 ? "1px solid #f1f5f9" : "none"
-              }}>
+              <div key={tx.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", borderBottom: i < recent.length - 1 ? "1px solid #f1f5f9" : "none" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div style={{
-                    width: "44px", height: "44px", borderRadius: "14px",
-                    backgroundColor: tx.type === "income" ? "#ecfdf5" : "#fff1f2",
-                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px"
-                  }}>
+                  <div style={{ width: "44px", height: "44px", borderRadius: "14px", backgroundColor: tx.type === "income" ? "#ecfdf5" : "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>
                     {tx.type === "income" ? "💰" : "💸"}
                   </div>
                   <div>
@@ -292,11 +242,8 @@ export default async function DashboardPage() {
                     </p>
                   </div>
                 </div>
-                <p style={{
-                  color: tx.type === "income" ? "#059669" : "#e11d48",
-                  fontSize: "16px", fontWeight: 700, margin: 0
-                }}>
-                  {tx.type === "expense" ? "-" : "+"}{parseFloat(tx.amount).toLocaleString("ar-TN")} د.ت
+                <p style={{ color: tx.type === "income" ? "#059669" : "#e11d48", fontSize: "16px", fontWeight: 700, margin: 0 }}>
+                  {tx.type === "expense" ? "-" : "+"}{parseFloat(tx.amount).toLocaleString("ar-TN")} {symbol}
                 </p>
               </div>
             ))

@@ -4,26 +4,16 @@
 import { useState, useEffect } from "react";
 
 export default function SettingsPage() {
-  // نسب التوزيع
   const [investment, setInvestment] = useState(30);
   const [emergency, setEmergency] = useState(15);
   const [family, setFamily] = useState(10);
   const [charity, setCharity] = useState(5);
   
-  // العملة
   const [currency, setCurrency] = useState("TND");
   const [currencySymbol, setCurrencySymbol] = useState("د.ت");
-  
-  // سعر صرف الدولار
   const [usdRate, setUsdRate] = useState("3.1");
-  
-  // اللغة
   const [language, setLanguage] = useState("ar");
-  
-  // حدود الإنفاق اليومي
   const [dailyLimit, setDailyLimit] = useState("");
-  
-  // هدف الطوارئ
   const [emergencyGoal, setEmergencyGoal] = useState("3000");
   
   const [loading, setLoading] = useState(false);
@@ -42,18 +32,19 @@ export default function SettingsPage() {
           setCharity(parseFloat(data.rules.charityPct));
         }
       } catch (err) {}
-      
-      // تحميل الإعدادات المحفوظة محلياً
-      const saved = localStorage.getItem("mizan_settings");
-      if (saved) {
-        const s = JSON.parse(saved);
-        if (s.currency) setCurrency(s.currency);
-        if (s.currencySymbol) setCurrencySymbol(s.currencySymbol);
-        if (s.usdRate) setUsdRate(s.usdRate);
-        if (s.language) setLanguage(s.language);
-        if (s.dailyLimit) setDailyLimit(s.dailyLimit);
-        if (s.emergencyGoal) setEmergencyGoal(s.emergencyGoal);
-      }
+
+      try {
+        const res = await fetch("/api/settings/all");
+        const data = await res.json();
+        if (data.settings) {
+          if (data.settings.currency) setCurrency(data.settings.currency);
+          if (data.settings.currencySymbol) setCurrencySymbol(data.settings.currencySymbol);
+          if (data.settings.usdRate) setUsdRate(data.settings.usdRate);
+          if (data.settings.language) setLanguage(data.settings.language);
+          if (data.settings.dailyLimit) setDailyLimit(data.settings.dailyLimit);
+          if (data.settings.emergencyGoal) setEmergencyGoal(data.settings.emergencyGoal);
+        }
+      } catch (err) {}
     }
     fetchSettings();
   }, []);
@@ -66,30 +57,37 @@ export default function SettingsPage() {
     if (!isValid) { setError("مجموع النسب يتجاوز 100%"); setLoading(false); return; }
 
     try {
-      // حفظ نسب التوزيع في السيرفر
-      const res = await fetch("/api/settings/rules", {
+      await fetch("/api/settings/rules", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ investment, emergency, family, charity }),
       });
-      if (!res.ok) { setError("خطأ في حفظ النسب"); setLoading(false); return; }
-    } catch { setError("خطأ"); setLoading(false); return; }
 
-    // حفظ باقي الإعدادات محلياً
-    const settings = { currency, currencySymbol, usdRate, language, dailyLimit, emergencyGoal };
-    localStorage.setItem("mizan_settings", JSON.stringify(settings));
+      await fetch("/api/settings/all", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currency,
+          currencySymbol,
+          usdRate: parseFloat(usdRate),
+          language,
+          dailyLimit: dailyLimit ? parseFloat(dailyLimit) : null,
+          emergencyGoal: parseFloat(emergencyGoal),
+        }),
+      });
 
-    setSuccess("تم حفظ جميع الإعدادات بنجاح");
-    setLoading(false);
+      setSuccess("تم حفظ جميع الإعدادات بنجاح");
+    } catch {
+      setError("خطأ في الحفظ");
+    } finally {
+      setLoading(false);
+    }
   }
 
   const currencies = [
     { value: "TND", symbol: "د.ت", label: "🇹🇳 دينار تونسي" },
     { value: "USD", symbol: "$", label: "🇺🇸 دولار أمريكي" },
     { value: "EUR", symbol: "€", label: "🇪🇺 يورو" },
-    { value: "LYD", symbol: "ل.د", label: "🇱🇾 دينار ليبي" },
-    { value: "DZD", symbol: "د.ج", label: "🇩🇿 دينار جزائري" },
-    { value: "MAD", symbol: "د.م", label: "🇲🇦 درهم مغربي" },
   ];
 
   const languages = [
@@ -101,10 +99,8 @@ export default function SettingsPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       
-      {/* Header */}
       <div style={{ backgroundColor: "white", borderRadius: "24px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9" }}>
         <h1 style={{ color: "#0f172a", fontSize: "24px", fontWeight: 800, margin: 0 }}>⚙️ الإعدادات</h1>
-        <p style={{ color: "#94a3b8", fontSize: "13px", margin: "6px 0 0 0" }}>خصص تطبيقك حسب احتياجاتك</p>
       </div>
 
       {/* العملة */}
@@ -120,10 +116,9 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* سعر صرف الدولار */}
+      {/* سعر الصرف */}
       <div style={{ backgroundColor: "white", borderRadius: "20px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9" }}>
         <h2 style={{ color: "#0f172a", fontSize: "16px", fontWeight: 700, margin: "0 0 6px 0" }}>💵 سعر صرف الدولار</h2>
-        <p style={{ color: "#94a3b8", fontSize: "12px", margin: "0 0 12px 0" }}>يستخدم في تحويل أرباح/خسائر التداول</p>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span style={{ color: "#0f172a", fontWeight: 700 }}>1 $ =</span>
           <input type="number" step="0.01" value={usdRate} onChange={(e) => setUsdRate(e.target.value)}
@@ -168,29 +163,6 @@ export default function SettingsPage() {
         <div style={{ backgroundColor: "#f8fafc", borderRadius: "14px", padding: "14px", display: "flex", justifyContent: "space-between", marginTop: "14px" }}>
           <span style={{ color: "#0f172a", fontWeight: 600 }}>🏠 حياة يومية</span>
           <span style={{ color: life < 0 ? "#dc2626" : "#0f172a", fontSize: "18px", fontWeight: 800 }}>{life}%</span>
-        </div>
-      </div>
-
-      {/* حدود الإنفاق */}
-      <div style={{ backgroundColor: "white", borderRadius: "20px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9" }}>
-        <h2 style={{ color: "#0f172a", fontSize: "16px", fontWeight: 700, margin: "0 0 6px 0" }}>🚫 حد الإنفاق اليومي</h2>
-        <p style={{ color: "#94a3b8", fontSize: "12px", margin: "0 0 12px 0" }}>سيظهر تنبيه عند تجاوز هذا الحد</p>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <input type="number" value={dailyLimit} onChange={(e) => setDailyLimit(e.target.value)}
-            style={{ flex: 1, border: "1px solid #e2e8f0", borderRadius: "12px", padding: "12px 16px", fontSize: "16px", color: "#0f172a", outline: "none" }}
-            placeholder="مثلاً: 50" />
-          <span style={{ color: "#64748b" }}>{currencySymbol}</span>
-        </div>
-      </div>
-
-      {/* هدف الطوارئ */}
-      <div style={{ backgroundColor: "white", borderRadius: "20px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9" }}>
-        <h2 style={{ color: "#0f172a", fontSize: "16px", fontWeight: 700, margin: "0 0 6px 0" }}>🎯 هدف صندوق الطوارئ</h2>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <input type="number" value={emergencyGoal} onChange={(e) => setEmergencyGoal(e.target.value)}
-            style={{ flex: 1, border: "1px solid #e2e8f0", borderRadius: "12px", padding: "12px 16px", fontSize: "16px", color: "#0f172a", outline: "none" }}
-            placeholder="3000" />
-          <span style={{ color: "#64748b" }}>{currencySymbol}</span>
         </div>
       </div>
 

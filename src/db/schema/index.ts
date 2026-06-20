@@ -127,3 +127,14 @@ export const referralClicks = pgTable("referral_clicks", {
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
 });
+// 7. جدول إعدادات المستخدم
+export const userSettings = pgTable("user_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  currency: text("currency").default("TND"),
+  currencySymbol: text("currency_symbol").default("د.ت"),
+  usdRate: numeric("usd_rate", { precision: 5, scale: 2 }).default("3.10"),
+  language: text("language").default("ar"),
+  dailyLimit: numeric("daily_limit", { precision: 10, scale: 2 }),
+  emergencyGoal: numeric("emergency_goal", { precision: 10, scale: 2 }).default("3000"),
+});
