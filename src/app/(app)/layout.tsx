@@ -9,6 +9,7 @@ const navItems = [
   { href: "/dashboard", icon: "🏠", label: "الرئيسية" },
   { href: "/add-income", icon: "➕", label: "دخل" },
   { href: "/add-expense", icon: "➖", label: "مصروف" },
+  { href: "/transactions", icon: "📋", label: "معاملات" },
   { href: "/goals", icon: "🎯", label: "أهداف" },
   { href: "/trading", icon: "📈", label: "تداول" },
   { href: "/settings", icon: "⚙️", label: "إعدادات" },

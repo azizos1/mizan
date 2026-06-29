@@ -1,8 +1,8 @@
-// File: C:\Users\Asus\Desktop\mizan\src\app\auth\register\page.tsx
-import * as entry from '../../../../../src/app/auth/register/page.js'
+// File: C:\Users\Asus\Desktop\mizan\src\app\page.tsx
+import * as entry from '../../../src/app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
-type TEntry = typeof import('../../../../../src/app/auth/register/page.js')
+type TEntry = typeof import('../../../src/app/page.js')
 
 // Check that the entry is a valid entry
 checkFields<Diff<{

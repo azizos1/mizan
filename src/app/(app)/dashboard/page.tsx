@@ -141,7 +141,24 @@ export default async function DashboardPage() {
           تم توفير: <span style={{ color: "#0f172a", fontWeight: 700 }}>{emergencyBalance.toLocaleString("ar-TN")} {symbol}</span>
         </p>
       </div>
-
+            {/* Zakat Reminder */}
+      {saved > 0 && (
+        <div style={{
+          backgroundColor: "#faf5ff", borderRadius: "20px", padding: "20px",
+          border: "1px solid #e9d5ff", textAlign: "center"
+        }}>
+          <p style={{ fontSize: "28px", margin: "0 0 8px 0" }}>🤲</p>
+          <p style={{ color: "#7c3aed", fontSize: "16px", fontWeight: 700, margin: 0 }}>
+            الزكاة المستحقة
+          </p>
+          <p style={{ color: "#0f172a", fontSize: "24px", fontWeight: 900, margin: "8px 0" }}>
+            {(saved * 0.025).toLocaleString("ar-TN")} {symbol}
+          </p>
+          <p style={{ color: "#94a3b8", fontSize: "12px", margin: 0 }}>
+            2.5% من المدخرات ({saved.toLocaleString("ar-TN")} {symbol})
+          </p>
+        </div>
+      )}
       {/* Goals Reminder */}
       {goalWallets.length > 0 && (
         <div style={{ backgroundColor: "white", borderRadius: "20px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9" }}>
