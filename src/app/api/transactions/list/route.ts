@@ -29,7 +29,9 @@ export async function GET(request: Request) {
   if (filter === "income") filtered = filtered.filter((t) => t.type === "income");
   if (filter === "expense") filtered = filtered.filter((t) => t.type === "expense");
   if (filter === "trading") filtered = filtered.filter((t) => t.type === "trading_gain" || t.type === "trading_loss");
-  if (filter === "charity") filtered = filtered.filter((t) => t.description?.includes("صدقة") || t.description?.includes("زكاة"));
+    if (filter === "charity") filtered = filtered.filter((t) => 
+    t.type === "expense" && (t.description?.includes("صدقة") || t.description?.includes("زكاة"))
+  );
 
   return NextResponse.json({ transactions: filtered.reverse() });
 }

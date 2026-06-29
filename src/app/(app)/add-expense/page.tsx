@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-const categories = ["🍔 أكل", "☕ قهوة", "🚗 تنقل", "🛍️ تسوق", "📄 فواتير", "🎮 ترفيه", "🏥 صحة", "📦 أخرى"];
+const categories = ["🍔 أكل", "☕ قهوة", "🚗 تنقل", "🛍️ تسوق", "📄 فواتير", "🎮 ترفيه", "🏥 صحة", "🤲 صدقة", "📦 أخرى"];
 const walletTypes = ["حياة يومية", "استثمار", "طوارئ", "عائلة", "صدقة"];
 const moods = [
   { value: "needed", label: "👍 أحتاجه", color: "#059669", bg: "#ecfdf5" },
